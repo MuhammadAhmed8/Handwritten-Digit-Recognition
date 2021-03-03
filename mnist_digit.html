@@ -7,7 +7,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
 
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;700&display=swap" rel="stylesheet">
-        <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+    <link href="./styles.css" rel="stylesheet"/>
+    <!--<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>-->
+    <script src="https://d3js.org/d3.v4.js"></script>
+
     <script src="utility.js"></script>
     <script  src="./visualize.js"></script> 
     <style>
@@ -25,11 +28,12 @@
         bottom:0;
         left: 0;
         width:100%;
+        font-size: 1rem;
       }
 
       ul {
         list-style: none;
-        margin: 50px;
+        margin: 20px;
         padding: 0;
         font: normal 16px/22px Arial;
         color: #999;
@@ -46,7 +50,7 @@ li {
     top: 9px;
     width: 20px;
     height: 999px;
-    border: 2px solid red;
+    border: 2px solid #D70F64;
     border-width: 2px 0 0 2px;
     }
     li:last-child::before {
@@ -68,22 +72,29 @@ li {
     color: #000;
     }
     li.current::before {
-      border-top-color: red;
+      border-top-color:#D70F64;
       }
     li.current::after {
-      border-color: red;
-      background: red;
+      border-color:#D70F64;
+      background: #D70F64;
       }
     li.passed::before,
     li.passed::after {
-      border-color: red;
+      border-color: #D70F64;
       }
 
       .title{
         font-family: 'Roboto', sans-serif;
         text-align: center;
         font-size:3rem;
-        padding:0 2rem
+        padding:0 2rem;
+        color:rgba(41,41,41,1)
+      }
+
+      .instruction{
+        color:rgba(117,117,117,1);
+        font-size:22px;
+        font-weight:400
       }
 
       .main_div{
@@ -98,13 +109,41 @@ li {
         display: flex;
         justify-content: center;
         align-items:center;
-        flex-direction:column
+        flex-direction:column;
+        margin-bottom: 3rem;
       }
 
-      .selection_div> div{
-        display:flex
+    
+
+      .btn{
+        width:100px;
+        height:40px;
+        padding:10px;
+        border-radius:5px;
+        border: 1px solid #D70F64;
+        font-weight: 600;
+        font-size:14px;
+        cursor:pointer
       }
-      
+
+      .btn-recognize{
+        background-color: #D70F64;
+        color: #fff;
+       
+      }
+      .btn-clear{
+        background-color: #D70F64;
+        color: #fff;
+       
+      }
+
+      .controls{
+        padding:15px;
+        font-family: 'Roboto', sans-serif;
+        display: flex;
+        flex-direction: column;
+      }
+
     </style>
     <!-- <script type="text/javascript" src="/js/jquery.min.js"></script> -->
   </head>
@@ -113,7 +152,7 @@ li {
       <h1 class="title">Visualization of a Neural Net for Handwritten Digit Recognition using Python, Javascript and the MNIST Dataset</h1>
       
       <div class="container">
-        <div><p>Draw a digit in the box below click "recognize".</p></div>
+        <div><p class="instruction">Draw a digit in the box below, and click "recognize".</p></div>
         <div class="main_div">
 
           <div class="drawing_div">
@@ -122,19 +161,32 @@ li {
             <div id="nnInput"></div>
           </div>
           <div class="selection_div">
-            <div>
-              <div style="padding-bottom:5px;"><input type="checkbox" id="preprocessing" checked="true"><span style="margin-left:5px;">Display Preprocessing</span></div>
-              <div style="padding-bottom:5px;"><input type="checkbox" id="scaleStrokeWidth" checked="true"><span style="margin-left:5px;">Scale Stroke Width</span></div>
+            <div class="controls">
+              <div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="preprocessing" checked="true"/>
+                  <span class="psuedo-checkbox"></span>
+                  <span class="custom-checkbox-title">Preprocessing</span>
+                </label>
+              </div>
+              <div>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="scaleStrokeWidth" checked="true"/>
+                  <span class="psuedo-checkbox"></span>
+                  <span class="custom-checkbox-title">Scale Stroke Width</span>
+                </label>
+              
             </div>
-            <div>
-              <div style="float:left;padding-right:10px;"><input class="btn btn-Light" type="button" value="Clear" id="clr" size="23" onclick="erase()"></div>
-              <div style="float:left;"><input class="btn btn-success" type="button" value="Recognize" id="recognize" size="23" onclick="recognize()"></div>
-             </div>
-          
           </div>
+            <div>
+              <div style="float:left;padding-right:10px;"><button class="btn btn-clear" id="clr"  onclick="erase()">Erase</button></div>
+              <div style="float:left;"><button class="btn btn-recognize" id="recognize" onclick="recognize()">Recognize</button></div>
+            </div>
+          
+          
         </div>
-
-    
+        
+        <hr style="margin-bottom:3rem">
 
           <div class="boxes" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center">
            
@@ -145,30 +197,36 @@ li {
             </div>
             <p class="layer_details">Input layer,<br>28*28,<br>784 neurons,<br>Preprocessed Input</p>
             </div>
-            <div id="layer2" style="border:1px solid; height: 280px; width: 400px; display: inline-block; margin: 10px">
-              <p>Second layer,<br>14*14,<br>196 neurons</p>
+            <div class="layer_box">
+            <div id="layer2" style="border:1px solid; height: 280px; width: 280px; display: inline-block; margin: 10px">
+
             </div>
+            <p class="layer_details">Second Layer,<br>14*14,<br>196 neurons</p>
+
+          </div>
+          <div class="layer_box">
             <div id="layer3" style="border:1px solid; height: 400px; width:400px; display: inline-block; margin: 10px">
              <div style="display:flex;justify-content: center;">
               <ul>
-                <li class="passed">0</li>
-                <li class="passed">1</li>
-                <li class="passed">2</li>
-                <li class="current">3<br><small>
-                <li class="passed">4</li>
-                <li class="passed">5</li>
-                <li class="passed">6</li>
-                <li class="passed">7</li>
-                <li class="passed">8</li>
-                <li class="passed">9</li>
+                <li class="passed" id="0">0 <span></span> </li>
+                <li class="passed" id="1">1</li>
+                <li class="passed" id="2">2</li>
+                <li class="passed" id="3">3<br><small>
+                <li class="passed" id="4">4</li>
+                <li class="passed" id="5">5</li>
+                <li class="passed" id="6">6</li>
+                <li class="passed" id="7">7</li>
+                <li class="passed" id="8">8</li>
+                <li class="passed" id="9">9</li>
               </ul>
               </div>
               
-              <p>Output layer,<br>4*4<br>10 neurons,<br>(16 for visualization)</p>
+              <p class="layer_details">Output layer,<br> 10 neurons</p>
             </div>
+          </div>
             <div style="border:1px solid; height: 280px; display: inline-block; margin: 10px">
-              <div style="font-size:100px;margin: 10px; width: 160px; height: 160px; text-align:center; border: 1px solid" id="nnOut"></div>
-              <p>Output</p>
+              <div style="background:#D70F64;font-size:100px;margin: 10px; width: 160px; height: 160px; text-align:center;color:#fff" id="nnOut"></div>
+              <p style="font-size:1.3rem">Output</p>
             </div>
           </div>
          
@@ -177,7 +235,7 @@ li {
       </div>
       <script type="text/javascript">
 
-///////////////////////////////
+
       var canvas;
       var ctx;
 
@@ -442,10 +500,10 @@ li {
           }
         }
 
-        out2.reshape(14,14);
+        //out2.reshape(14,14);
         
 
-        Plot(out2,"layer2");
+        Plot(out2,"#layer2");
         // compute layer3 output (softmax)
         var max3 = out3.reduce(function(p,c) { return p>c ? p : c; });
         var nominators = out3.map(function(e) { return Math.exp(e - max3); });
@@ -469,10 +527,8 @@ li {
         });
 
         
-
-        output.reshape(4,3);
-        Plot(output,"layer3")
-        
+        let digit = document.getElementById(maxIndex.toString());
+        digit.classList.add('current')
 
         return maxIndex;
       }
@@ -763,4 +819,7 @@ li {
     </div>
     <footer></footer>
   </body>
+
+  <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
 </html>
